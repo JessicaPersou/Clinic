@@ -39,4 +39,12 @@ public class PatientRepositoryImpl implements PatientRepository {
             new ResourceNotFoundException(PATIENT_NOT_FOUND_WITH_ID + id));
         return patientMapper.toDomain(patientEntity);
     }
+
+    @Override
+    @Transactional
+    public Patient create(Patient patient) {
+        var patientEntity = patientMapper.toEntity(patient);
+        var savedPatient = patientJpaRepository.save(patientEntity);
+        return patientMapper.toDomain(savedPatient);
+    }
 }

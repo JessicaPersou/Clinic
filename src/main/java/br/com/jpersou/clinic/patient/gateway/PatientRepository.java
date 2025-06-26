@@ -11,4 +11,7 @@ public interface PatientRepository {
 
     @Transactional(readOnly = true)
     Patient findById(String id);
+
+    @Transactional
+    Patient create(Patient patient);
 }
