@@ -16,12 +16,12 @@ import lombok.With;
 
 @With
 @Data
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "RECORD_RECORDS")
-public class RedordEntity {
+public class RecordEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

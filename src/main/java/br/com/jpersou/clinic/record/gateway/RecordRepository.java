@@ -1,4 +1,4 @@
 package br.com.jpersou.clinic.record.gateway;
 
-public interface RedordRepository {
+public interface RecordRepository {
 }

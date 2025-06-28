@@ -1,19 +1,22 @@
-package br.com.jpersou.clinic.patient.config;
+package br.com.jpersou.clinic.auth.config.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Profile("!test")
 @Configuration
-public class SpringSecurity {
-
+@EnableWebSecurity
+public class SecurityConfig {
     @Bean
     public InMemoryUserDetailsManager userDetailsService() {
         UserDetails user = User.withDefaultPasswordEncoder()
@@ -28,7 +31,19 @@ public class SpringSecurity {
             .roles("ADMIN")
             .build();
 
-        return new InMemoryUserDetailsManager(user);
+        UserDetails doctor = User.withDefaultPasswordEncoder()
+            .username("doctor")
+            .password("doctor")
+            .roles("DOCTOR")
+            .build();
+
+        UserDetails nurse = User.withDefaultPasswordEncoder()
+            .username("nurse")
+            .password("nurse")
+            .roles("NURSE")
+            .build();
+
+        return new InMemoryUserDetailsManager(user, admin, doctor, nurse);
     }
 
     @Bean
@@ -36,11 +51,17 @@ public class SpringSecurity {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/patients/**").hasRole("USER") // Restrito a ADMIN
+                .requestMatchers("/v1/auth/register", "/v1/auth/login").permitAll()
+                .requestMatchers("/v1/patients/edit/**").hasRole("DOCTOR")
                 .anyRequest().authenticated()
             )
-            .formLogin(Customizer.withDefaults())
+            .formLogin(form -> form.disable())
             .httpBasic(Customizer.withDefaults());
         return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }

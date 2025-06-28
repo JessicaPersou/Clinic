@@ -16,11 +16,11 @@ import lombok.With;
 
 @With
 @Data
-@Entity
-@Table(name = "PATIENT_PATIENTS")
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
+@Table(name = "PATIENT_PATIENTS")
 public class PatientEntity {
 
     @Id
