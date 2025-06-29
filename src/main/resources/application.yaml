@@ -21,9 +21,8 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
-    url: jdbc:postgresql://localhost:5432/clinic
-    user: seu_usuario
-    password: sua_senha
+    locations: classpath:db/migration
+
   security:
     require-ssl: false
 
@@ -35,12 +34,12 @@ jwt:
 # Logging
 logging:
   level:
-    br.com.jpersou.clinic: DEBUG
+    br.com.jpersou.clinic: INFO
     org.springframework.security: DEBUG
 
 # Server
 server:
-  port: 8080
+  port: 8000
 
 # Management (Actuator)
 management:
@@ -51,6 +50,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-
-

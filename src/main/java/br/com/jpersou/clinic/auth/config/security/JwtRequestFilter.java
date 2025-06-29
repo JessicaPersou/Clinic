@@ -1,6 +1,7 @@
+// src/main/java/br/com/jpersou/clinic/auth/config/security/JwtRequestFilter.java
 package br.com.jpersou.clinic.auth.config.security;
 
-import br.com.jpersou.clinic.auth.application.AuthUseCase;
+import br.com.jpersou.clinic.auth.application.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,11 +18,11 @@ import java.io.IOException;
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-    private final AuthUseCase authUseCase;
-    private final JwtService jwtService; // Mudança aqui - usar JwtService
+    private final CustomUserDetailsService customUserDetailsService;
+    private final JwtService jwtService;
 
-    public JwtRequestFilter(AuthUseCase authUseCase, JwtService jwtService) {
-        this.authUseCase = authUseCase;
+    public JwtRequestFilter(CustomUserDetailsService customUserDetailsService, JwtService jwtService) {
+        this.customUserDetailsService = customUserDetailsService;
         this.jwtService = jwtService;
     }
 
@@ -44,7 +45,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = authUseCase.loadUserByUsername(username);
+            UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
 
             if (jwtService.validateToken(jwtToken, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken =

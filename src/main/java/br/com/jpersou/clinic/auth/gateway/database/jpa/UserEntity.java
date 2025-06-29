@@ -1,13 +1,7 @@
 package br.com.jpersou.clinic.auth.gateway.database.jpa;
 
 import br.com.jpersou.clinic.auth.domain.Role;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -30,16 +24,17 @@ import org.springframework.security.core.userdetails.UserDetails;
 public class UserEntity implements UserDetails {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "ID", length = 36)
     private String id;
 
-    @Column(unique = true, name = "USERNAME", length = 50)
+    @Column(unique = true, name = "USERNAME", length = 50, nullable = false)
     private String username;
 
     @Column(name = "EMAIL", length = 100, nullable = false, unique = true)
     private String email;
 
-    @Column(name = "PASSWORD")
+    @Column(name = "PASSWORD", nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)
@@ -52,24 +47,35 @@ public class UserEntity implements UserDetails {
     @Column(name = "UPDATED_AT")
     private LocalDateTime updatedAt;
 
+    @Column(name = "ENABLED")
     private boolean enabled = true;
+
+    @Column(name = "ACCOUNT_NON_EXPIRED")
     private boolean accountNonExpired = true;
+
+    @Column(name = "ACCOUNT_NON_LOCKED")
     private boolean accountNonLocked = true;
+
+    @Column(name = "CREDENTIALS_NON_EXPIRED")
     private boolean credentialsNonExpired = true;
 
+    // Construtor personalizado sem ID (será gerado automaticamente)
     public UserEntity(String username, String email, String password, Role role) {
-        this.id = java.util.UUID.randomUUID().toString();
         this.username = username;
         this.email = email;
         this.password = password;
         this.role = role;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        this.enabled = true;
+        this.accountNonExpired = true;
+        this.accountNonLocked = true;
+        this.credentialsNonExpired = true;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.name()));
+        return List.of(new SimpleGrantedAuthority(role.getAuthority()));
     }
 
     @Override
@@ -100,6 +106,12 @@ public class UserEntity implements UserDetails {
     @Override
     public boolean isEnabled() {
         return enabled;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
