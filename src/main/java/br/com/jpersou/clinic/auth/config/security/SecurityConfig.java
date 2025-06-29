@@ -1,67 +1,60 @@
 package br.com.jpersou.clinic.auth.config.security;
 
+import br.com.jpersou.clinic.auth.application.AuthUseCase;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import org.springframework.security.config.Customizer;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-@Profile("!test")
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
-    @Bean
-    public InMemoryUserDetailsManager userDetailsService() {
-        UserDetails user = User.withDefaultPasswordEncoder()
-            .username("user")
-            .password("user")
-            .roles("USER")
-            .build();
 
-        UserDetails admin = User.withDefaultPasswordEncoder()
-            .username("admin")
-            .password("admin")
-            .roles("ADMIN")
-            .build();
+    private final AuthUseCase authUseCase;
+    private final JwtRequestFilter jwtRequestFilter;
 
-        UserDetails doctor = User.withDefaultPasswordEncoder()
-            .username("doctor")
-            .password("doctor")
-            .roles("DOCTOR")
-            .build();
-
-        UserDetails nurse = User.withDefaultPasswordEncoder()
-            .username("nurse")
-            .password("nurse")
-            .roles("NURSE")
-            .build();
-
-        return new InMemoryUserDetailsManager(user, admin, doctor, nurse);
-    }
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/v1/auth/register", "/v1/auth/login").permitAll()
-                .requestMatchers("/v1/patients/edit/**").hasRole("DOCTOR")
-                .anyRequest().authenticated()
-            )
-            .formLogin(form -> form.disable())
-            .httpBasic(Customizer.withDefaults());
-        return http.build();
+    public SecurityConfig(AuthUseCase authUseCase, JwtRequestFilter jwtRequestFilter) {
+        this.authUseCase = authUseCase;
+        this.jwtRequestFilter = jwtRequestFilter;
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(authz -> authz
+                .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/doctor/**").hasAnyRole("ADMIN", "MEDICO")
+                .requestMatchers("/api/nurse/**").hasAnyRole("ADMIN", "MEDICO", "NURSE")
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+            .cors(cors -> cors.disable())
+            .csrf(csrf -> csrf.disable());
+
+        return http.build();
     }
 }

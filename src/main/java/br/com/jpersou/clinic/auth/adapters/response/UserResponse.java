@@ -1,16 +1,14 @@
 package br.com.jpersou.clinic.auth.adapters.response;
 
-import br.com.jpersou.clinic.auth.domain.Role;
 import lombok.Builder;
 import lombok.With;
 
 @With
 @Builder(toBuilder = true)
-public record AuthResponse(
-    String token,
+public record UserResponse(
+    Long id,
     String username,
     String email,
-    Role role,
-    String message
+    String role
 ) {
 }

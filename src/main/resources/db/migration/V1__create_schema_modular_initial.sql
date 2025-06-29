@@ -1,9 +1,9 @@
 -- Flyway migration: V1__create_schema_modular_initial.sql
 -- Author: jessica_sousa
--- Description: Create initial schema for AUTH_PROFESSIONALS, PATIENT_PATIENTS, and RECORD_RECORDS tables
+-- Description: Create initial schema for USERS, PATIENT_PATIENTS, and RECORD_RECORDS tables
 
 -- Módulo Auth
-CREATE TABLE AUTH_PROFESSIONALS
+CREATE TABLE USER_USERS
 (
     ID         VARCHAR(36) PRIMARY KEY NOT NULL,
     NAME       VARCHAR(100),

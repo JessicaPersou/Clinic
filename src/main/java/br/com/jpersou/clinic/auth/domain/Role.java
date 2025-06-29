@@ -5,9 +5,13 @@ public enum Role {
     DOCTOR("ROLE_MEDICO"),
     NURSE("ROLE_NURSE");
 
-    private final String role;
+    private final String authority;
 
-    Role(String role) {
-        this.role = role;
+    Role(String authority) {
+        this.authority = authority;
+    }
+
+    public String getAuthority() {
+        return authority;
     }
 }
