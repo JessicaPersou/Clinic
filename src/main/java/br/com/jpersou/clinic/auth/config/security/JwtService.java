@@ -14,9 +14,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 @Component
-public class JwtUtil {
+public class JwtService {
 
-    @Value("${jwt.secret:clinic-secret-key-muito-longa-para-ser-segura}")
+    @Value("${jwt.secret:clinic-secret-key-muito-longa-para-ser-segura-e-ter-mais-de-32-caracteres}")
     private String secret;
 
     @Value("${jwt.expiration:86400000}") // 24 horas

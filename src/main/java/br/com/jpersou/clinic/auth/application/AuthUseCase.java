@@ -4,7 +4,7 @@ import br.com.jpersou.clinic.auth.adapters.request.AuthRequest;
 import br.com.jpersou.clinic.auth.adapters.request.RegisterRequest;
 import br.com.jpersou.clinic.auth.adapters.response.AuthResponse;
 import br.com.jpersou.clinic.auth.config.mapper.UserMapper;
-import br.com.jpersou.clinic.auth.config.security.JwtUtil;
+import br.com.jpersou.clinic.auth.config.security.JwtService;
 import br.com.jpersou.clinic.auth.gateway.database.jpa.UserEntity;
 import br.com.jpersou.clinic.auth.gateway.UserRepository;
 import java.time.LocalDateTime;
@@ -25,21 +25,23 @@ public class AuthUseCase implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
+    private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final UserMapper userMapper;
 
+    @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         if (username == null || username.isBlank()) {
             throw new UsernameNotFoundException("Usuário não encontrado: " + username);
         }
-        var userEntity = userRepository.findByUsername(username)
+
+        var userDomain = userRepository.findByUsername(username)
             .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + username));
 
         return User.builder()
-            .username(userEntity.username())
-            .password(userEntity.password())
-            .authorities(userEntity.role().getAuthority())
+            .username(userDomain.username())
+            .password(userDomain.password())
+            .authorities(userDomain.role().getAuthority())
             .build();
     }
 
@@ -52,25 +54,26 @@ public class AuthUseCase implements UserDetailsService {
             throw new RuntimeException("Email já existe");
         }
 
-        UserEntity userEntity = new UserEntity(
-            request.username(),
-            request.email(),
-            passwordEncoder.encode(request.password()),
-            request.role()
-        );
+        // Criar o domain object diretamente
+        var userDomain = userMapper.toDomain(request)
+            .withPassword(passwordEncoder.encode(request.password()));
 
-        userEntity.setCreatedAt(LocalDateTime.now());
-        var toDomain = userMapper.toDomain(userEntity);
-        var userSaved = userRepository.save(toDomain);
-        var userToGeneratedtoken = userMapper.toEntity(userSaved);
+        var userSaved = userRepository.save(userDomain);
 
-        String token = jwtUtil.generateToken(userToGeneratedtoken);
+        // Converter para UserDetails para gerar token
+        UserDetails userDetails = User.builder()
+            .username(userSaved.username())
+            .password(userSaved.password())
+            .authorities(userSaved.role().getAuthority())
+            .build();
+
+        String token = jwtService.generateToken(userDetails);
 
         return new AuthResponse(
             token,
-            userEntity.getUsername(),
-            userEntity.getEmail(),
-            userEntity.getRole(),
+            userSaved.username(),
+            userSaved.email(),
+            userSaved.role(),
             "Usuário registrado com sucesso"
         );
     }
@@ -80,14 +83,18 @@ public class AuthUseCase implements UserDetailsService {
             new UsernamePasswordAuthenticationToken(request.username(), request.password())
         );
 
-        UserEntity userEntity = (UserEntity) authentication.getPrincipal();
-        String token = jwtUtil.generateToken(userEntity);
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String token = jwtService.generateToken(userDetails);
+
+        // Buscar dados completos do usuário
+        var userDomain = userRepository.findByUsername(request.username())
+            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         return new AuthResponse(
             token,
-            userEntity.getUsername(),
-            userEntity.getEmail(),
-            userEntity.getRole(),
+            userDomain.username(),
+            userDomain.email(),
+            userDomain.role(),
             "Login realizado com sucesso"
         );
     }

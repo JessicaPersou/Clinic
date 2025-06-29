@@ -1,0 +1,56 @@
+# src/main/resources/application.yml
+spring:
+  application:
+    name: clinic
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/clinic_db
+    username: clinic_user
+    password: clinic_pass
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    url: jdbc:postgresql://localhost:5432/clinic
+    user: seu_usuario
+    password: sua_senha
+  security:
+    require-ssl: false
+
+# JWT Configuration
+jwt:
+  secret: clinic-secret-key-muito-longa-para-ser-segura-e-ter-mais-de-32-caracteres-para-sha256
+  expiration: 86400000 # 24 horas em millisegundos
+
+# Logging
+logging:
+  level:
+    br.com.jpersou.clinic: DEBUG
+    org.springframework.security: DEBUG
+
+# Server
+server:
+  port: 8080
+
+# Management (Actuator)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+
+

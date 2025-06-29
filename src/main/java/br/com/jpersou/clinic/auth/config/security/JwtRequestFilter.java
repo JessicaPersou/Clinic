@@ -18,11 +18,11 @@ import java.io.IOException;
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     private final AuthUseCase authUseCase;
-    private final JwtUtil jwtUtil;
+    private final JwtService jwtService; // Mudança aqui - usar JwtService
 
-    public JwtRequestFilter(AuthUseCase authUseCase, JwtUtil jwtUtil) {
+    public JwtRequestFilter(AuthUseCase authUseCase, JwtService jwtService) {
         this.authUseCase = authUseCase;
-        this.jwtUtil = jwtUtil;
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -37,7 +37,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
             jwtToken = requestTokenHeader.substring(7);
             try {
-                username = jwtUtil.extractUsername(jwtToken);
+                username = jwtService.extractUsername(jwtToken);
             } catch (Exception e) {
                 logger.warn("Unable to get JWT Token or JWT Token has expired");
             }
@@ -46,7 +46,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = authUseCase.loadUserByUsername(username);
 
-            if (jwtUtil.validateToken(jwtToken, userDetails)) {
+            if (jwtService.validateToken(jwtToken, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
